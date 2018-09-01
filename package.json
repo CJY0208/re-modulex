@@ -1,0 +1,42 @@
+{
+  "name": "redux-module",
+  "version": "1.0.0",
+  "description": "Make Redux more like vuex",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CJY0208/redux-module.git"
+  },
+  "keywords": [
+    "redux",
+    "vuex"
+  ],
+  "author": "CJY0208",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CJY0208/redux-module/issues"
+  },
+  "homepage": "https://github.com/CJY0208/redux-module#readme",
+  "peerDependencies": {
+    "react": ">=15"
+  },
+  "dependencies": {
+    "hoist-non-react-statics": "^2.5.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "rollup": "^0.61.2",
+    "rollup-plugin-babel": "^3.0.5",
+    "rollup-plugin-commonjs": "^9.1.6",
+    "rollup-plugin-node-resolve": "^3.3.0",
+    "rollup-plugin-uglify": "^4.0.0"
+  }
+}
