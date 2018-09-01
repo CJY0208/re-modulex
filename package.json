@@ -1,5 +1,5 @@
 {
-  "name": "redux-module",
+  "name": "@cjy0208/redux-module",
   "version": "1.0.0",
   "description": "Make Redux more like vuex",
   "main": "index.js",

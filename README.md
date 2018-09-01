@@ -7,7 +7,7 @@
 ```javascript
 // ......
 // module.js
-import { createModule } from 'redux-module'
+import { createModule } from '@cjy0208/redux-module'
 
 const delay = time => new Promise(resolve => setTimeout(resolve, time))
 
@@ -63,7 +63,7 @@ export default store
 // ......
 // app.js
 import React, { Component } from 'react'
-import { connectModules } from 'redux-module'
+import { connectModules } from '@cjy0208/redux-module'
 
 @connectModules(({ main }) => ({
   main
@@ -102,7 +102,7 @@ export default class App extends Component {
 // index.js
 import React from 'react'
 import { render } from 'react-dom'
-import { ModuleProvider } from 'redux-module'
+import { ModuleProvider } from '@cjy0208/redux-module'
 import App from './app.js'
 import store from './store'
 
