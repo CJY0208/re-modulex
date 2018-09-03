@@ -1,14 +1,14 @@
 {
-  "name": "@cjy0208/redux-module",
+  "name": "re-modulex",
   "version": "1.0.0",
-  "description": "Make Redux more like vuex",
+  "description": "Make Redux easier like vuex",
   "main": "index.js",
   "scripts": {
     "build": "rollup --config"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CJY0208/redux-module.git"
+    "url": "git+https://github.com/CJY0208/re-modulex.git"
   },
   "keywords": [
     "redux",
@@ -17,9 +17,9 @@
   "author": "CJY0208",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/CJY0208/redux-module/issues"
+    "url": "https://github.com/CJY0208/re-modulex/issues"
   },
-  "homepage": "https://github.com/CJY0208/redux-module#readme",
+  "homepage": "https://github.com/CJY0208/re-modulex#readme",
   "peerDependencies": {
     "react": ">=15"
   },
