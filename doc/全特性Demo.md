@@ -16,7 +16,7 @@ const reduxModule = createModule({
     commit, // commit 为原 redux 的 dispatch
     dispatch, // dispatch 只触发到动作层
     getState, // 获取当前 module 的 state
-    getReduxState, // 获取整个 redux store 的 state
+    getStoreState, // 获取整个 redux store 的 state
     getModules // 获取其他 module 以进行模块间通信
   }) => ({
     counter: {
@@ -29,6 +29,7 @@ const reduxModule = createModule({
       commit('text', text)
       await delay(2000)
       commit('add', 1) // 同一个 action 可以 commit 多次
+      dispatch.counter.reduce(1) // 也可以触发其他 action 
     }
   }),
   mutations: ({ combine }) => ({
@@ -51,7 +52,7 @@ export default reduxModule
 
 ## store.js
 ```javascript
-import { createStore, applyMiddleware, compose, combineReducers } from 'redux'
+import { createStore } from 'redux'
 import reduxModule from './module.js'
 
 const store = createStore(reduxModule.reducer)
@@ -111,7 +112,7 @@ import App from './app.js'
 import store from './store'
 
 render(
-  <ModuleProvider {...{ store }}>
+  <ModuleProvider store={store}>
     <App />
   </ModuleProvider>,
   document.getElementById('app')
