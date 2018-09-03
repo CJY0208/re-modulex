@@ -8,9 +8,9 @@
 npm install re-modulex --save
 ```
 
-## 使用方法
+## 基础用法
 
-全特性 Demo 请参考此处
+更多使用方法请参考 [全特性Demo](https://github.com/CJY0208/re-modulex/blob/master/doc/%E5%85%A8%E7%89%B9%E6%80%A7Demo.md)
 
 ```javascript
 import React, { Component } from 'react'
