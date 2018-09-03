@@ -1,6 +1,6 @@
 # re-modulex
 
-一个让 redux 写起来像 vuex 一样简单的轮子
+一个让 `redux` 在 `React` 应用上写起来像 `vuex` 一样简单的轮子
 
 ## 安装
 
