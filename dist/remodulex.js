@@ -140,6 +140,16 @@ var slicedToArray = function () {
   };
 }();
 
+var toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
 // 值类型判断 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 var isUndefined = function isUndefined(val) {
   return typeof val === 'undefined';
@@ -216,7 +226,18 @@ var saveModule = function saveModule(name, module) {
   __modules[name] = module;
 };
 var mapModules = function mapModules(modulesGetter, storeState) {
-  return Object.entries(value(run(modulesGetter, undefined, getModules()), {})).reduce(function (res, _ref) {
+  if (isArray(modulesGetter)) {
+    var moduleNames = [].concat(toConsumableArray(modulesGetter));
+    modulesGetter = function modulesGetter(modules) {
+      return moduleNames.reduce(function (res, name) {
+        return modules[name] ? _extends({}, res, defineProperty({}, name, modules[name])) : res;
+      }, {});
+    };
+  }
+
+  var modules = value(run(modulesGetter, undefined, getModules()), {});
+
+  return Object.entries(modules).reduce(function (res, _ref) {
     var _ref2 = slicedToArray(_ref, 2),
         name = _ref2[0],
         _ref2$ = _ref2[1],
@@ -229,9 +250,13 @@ var mapModules = function mapModules(modulesGetter, storeState) {
       var state = getState(storeState);
 
       return {
-        state: state,
+        getState: getState,
+        getComputed: function getComputed() {
+          return compute(getState());
+        },
         dispatch: dispatch,
         commit: commit,
+        state: state,
         getters: compute(state)
       };
     })));
@@ -460,15 +485,31 @@ function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
 
 var hoistNonReactStatics_cjs = hoistNonReactStatics;
 
-var _React$createContext = React__default.createContext(),
-    Provider = _React$createContext.Provider,
-    Consumer = _React$createContext.Consumer;
+var _value = value(function () {
+  try {
+    return React__default.createContext();
+  } catch (error) {
+    console.warn(new Error('\n      [ReModulex Environment Waring] \n        \'React.createContext\' API is not supported by you React version. \n        So \'ModuleProvider\' and \'connectModules\' would NOT effect.\n        Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.\n        https://github.com/CJY0208/re-modulex#%E4%B8%8D%E6%83%B3%E7%94%A8%E9%85%8D%E5%A5%97%E7%9A%84-moduleprovider-%E5%92%8C-connectmodules%E6%83%B3%E9%85%8D%E5%90%88-react-redux-\n    '));
+    return {
+      Provider: function Provider(_ref) {
+        var children = _ref.children;
+        return run(children);
+      },
+      Consumer: function Consumer(_ref2) {
+        var children = _ref2.children;
+        return run(children);
+      }
+    };
+  }
+}),
+    Provider = _value.Provider,
+    Consumer = _value.Consumer;
 
 var ModuleProvider = function (_Component) {
   inherits(ModuleProvider, _Component);
 
   function ModuleProvider(props) {
-    var _ref;
+    var _ref3;
 
     classCallCheck(this, ModuleProvider);
     var store = props.store;
@@ -477,7 +518,7 @@ var ModuleProvider = function (_Component) {
       args[_key - 1] = arguments[_key];
     }
 
-    var _this = possibleConstructorReturn(this, (_ref = ModuleProvider.__proto__ || Object.getPrototypeOf(ModuleProvider)).call.apply(_ref, [this, props].concat(args)));
+    var _this = possibleConstructorReturn(this, (_ref3 = ModuleProvider.__proto__ || Object.getPrototypeOf(ModuleProvider)).call.apply(_ref3, [this, props].concat(args)));
 
     _this.state = _this.props.store.getState();
 
@@ -513,7 +554,7 @@ var connectModules = function connectModules(modulesGetter) {
         Consumer,
         null,
         function (storeState) {
-          return React__default.createElement(Component, _extends({}, props, mapModules(modulesGetter)));
+          return React__default.createElement(Component, _extends({}, props, mapModules(modulesGetter, storeState)));
         }
       );
     };

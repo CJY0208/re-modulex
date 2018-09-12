@@ -4,11 +4,13 @@ let __store
 
 const check = fn => (...args) => {
   if (!__store) {
-    console.error(new Error(`
+    console.error(
+      new Error(`
       [ReModulex Error] 
         Forgot to apply the store?
         Use 'ReModulex.applyStore' with your redux store!
-    `))
+    `)
+    )
   }
   return run(fn, undefined, ...args)
 }

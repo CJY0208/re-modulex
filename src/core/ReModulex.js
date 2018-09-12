@@ -10,11 +10,7 @@ import {
 import { combine, split } from '../helpers/splitter'
 
 export default class ReModulex {
-  constructor({
-    name,    
-    state: __initial__state,
-    ...config
-  }) {
+  constructor({ name, state: __initial__state, ...config }) {
     if (hasModule(name)) {
       throw new Error(`
         [Creating ReModulex Error] Duplicated module named '${name}'
@@ -49,7 +45,7 @@ export default class ReModulex {
       commit: this.commit,
       getState: this.getState
     })
-    
+
     saveModule(
       name,
       Object.assign(this, {
@@ -68,7 +64,7 @@ export default class ReModulex {
   dispatch = (actionName = '', ...args) =>
     run(this.actions, actionName.split('/'), ...args)
 
-  commit = (actionType = '', payload) => 
+  commit = (actionType = '', payload) =>
     storeDispatch({
       type: `${this.name}::${actionType}`,
       payload

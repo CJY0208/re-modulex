@@ -1,3 +1,4 @@
+import { isArray } from './is'
 import { value, run } from './try'
 
 const __modules = {}
@@ -7,20 +8,40 @@ export const hasModule = name => !!__modules[name]
 export const saveModule = (name, module) => {
   __modules[name] = module
 }
-export const mapModules = (modulesGetter, storeState) =>
-  Object.entries(value(run(modulesGetter, undefined, getModules()), {})).reduce(
+export const mapModules = (modulesGetter, storeState) => {
+  if (isArray(modulesGetter)) {
+    let moduleNames = [...modulesGetter]
+    modulesGetter = modules =>
+      moduleNames.reduce(
+        (res, name) =>
+          modules[name]
+            ? {
+                ...res,
+                [name]: modules[name]
+              }
+            : res,
+        {}
+      )
+  }
+
+  const modules = value(run(modulesGetter, undefined, getModules()), {})
+
+  return Object.entries(modules).reduce(
     (res, [name, { dispatch, commit, compute, getState }]) => ({
       ...res,
       [name]: value(() => {
         const state = getState(storeState)
-        
+
         return {
-          state,
+          getState,
+          getComputed: () => compute(getState()),
           dispatch,
           commit,
+          state,
           getters: compute(state)
         }
       })
     }),
     {}
   )
+}
