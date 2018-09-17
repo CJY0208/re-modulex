@@ -39,9 +39,7 @@ const { reducer } = createModule({
 
 const store = createStore(reducer)
 
-@connectModules(modules => ({
-  main: modules.main
-}))
+@connectModules(['main'])
 class App extends Component {
   render() {
     const { main } = this.props
