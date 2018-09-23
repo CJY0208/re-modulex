@@ -1,8 +1,8 @@
 {
   "name": "re-modulex",
-  "version": "1.0.2",
-  "description": "Make Redux easier like vuex",
-  "main": "index.js",
+  "version": "1.0.3",
+  "description": "Make Redux easier like vuex in React Application",
+  "main": "dist/re-modulex.min.js",
   "scripts": {
     "build": "rollup --config"
   },
@@ -12,6 +12,7 @@
   },
   "keywords": [
     "redux",
+    "module",
     "vuex"
   ],
   "author": "CJY0208",

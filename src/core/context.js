@@ -15,7 +15,7 @@ const { Provider, Consumer } = value(() => {
         'React.createContext' API is not supported by you React version. 
         So 'ModuleProvider' and 'connectModules' would NOT effect.
         Use 'applyStore' and 'mapModules' with 'Provider' and 'connect' in react-redux instead.
-        https://github.com/CJY0208/re-modulex#%E4%B8%8D%E6%83%B3%E7%94%A8%E9%85%8D%E5%A5%97%E7%9A%84-moduleprovider-%E5%92%8C-connectmodules%E6%83%B3%E9%85%8D%E5%90%88-react-redux-
+        https://github.com/CJY0208/re-modulex/blob/master/README.md#%E4%BD%BF%E7%94%A8-react-redux
     `)
     )
     return {

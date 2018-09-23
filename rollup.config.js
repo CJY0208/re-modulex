@@ -6,8 +6,9 @@ import commonjs from 'rollup-plugin-commonjs'
 export default {
   input: 'src/index.js',
   output: {
-    file: 'dist/remodulex.min.js',
-    format: 'cjs'
+    name: 'ReModulex',
+    file: 'dist/re-modulex.min.js',
+    format: 'umd'
   },
   external: [
     'react'
