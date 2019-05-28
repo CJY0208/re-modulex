@@ -8,7 +8,8 @@ export default [
     input: 'src/index.js',
     output: {
       file: 'dist/ReModulex.min.js',
-      format: 'cjs'
+      format: 'umd',
+      name: 'ReModulex'
     },
     external: ['react'],
     plugins: [
@@ -26,7 +27,8 @@ export default [
     input: 'src/index.js',
     output: {
       file: 'dist/ReModulex.js',
-      format: 'cjs'
+      format: 'umd',
+      name: 'ReModulex'
     },
     external: ['react'],
     plugins: [

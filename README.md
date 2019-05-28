@@ -39,9 +39,7 @@ const { reducer } = createModule({
 
 const store = createStore(reducer)
 
-@connectModules(modules => ({
-  main: modules.main
-}))
+@connectModules(['main'])
 class App extends Component {
   render() {
     const { main } = this.props
@@ -68,7 +66,9 @@ render(
 
 - - -
 
-## 不想用配套的 ModuleProvider 和 connectModules，想配合 react-redux ？
+## 使用 `react-redux`
+
+不想用配套的 ModuleProvider 和 connectModules，想配合 react-redux ？
 
 ```javascript
 
