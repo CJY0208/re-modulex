@@ -312,13 +312,84 @@ var split = function split(types, reducer, name) {
   }, {});
 };
 
-var ReModulex = function ReModulex(_ref) {
-  var _this = this;
+/**
+ * [缓存函数结果]
+ * @param {Function} fn 被处理的函数
+ */
+var memoize = function memoize(fn) {
+  var cache = new Map();
+  var memoized = function memoized(param) {
+    if (cache.has(param)) {
+      return cache.get(param);
+    }
 
+    for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      rest[_key - 1] = arguments[_key];
+    }
+
+    var result = fn.call.apply(fn, [this, param].concat(rest));
+
+    cache.set(param, result);
+    return result;
+  };
+
+  memoized.cache = cache;
+  return memoized;
+};
+
+var ReModulex = function ReModulex(_ref) {
   var name = _ref.name,
       __initial__state = _ref.state,
       config = objectWithoutProperties(_ref, ['name', 'state']);
   classCallCheck(this, ReModulex);
+
+  _initialiseProps.call(this);
+
+  if (hasModule(name)) {
+    throw new Error('\n        [Creating ReModulex Error] Duplicated module named \'' + name + '\'\n      ');
+  }
+
+  if (!isObject(__initial__state)) {
+    throw new Error('\n        [Creating ReModulex Error] Initial state must be an Object!\n      ');
+  }
+
+  var initialState = _extends({
+    __ReModulexName: name
+  }, __initial__state);
+  var __mutations = Object.entries(run(config, 'mutations', {
+    combine: combine
+  })).reduce(function (mutations, _ref2) {
+    var _ref3 = slicedToArray(_ref2, 2),
+        actionType = _ref3[0],
+        reducer = _ref3[1];
+
+    return _extends({}, mutations, split(actionType, reducer, name));
+  }, {});
+  var __actions = run(config, 'actions', {
+    getModules: getModules,
+    getStoreState: getState,
+    dispatch: this.dispatch,
+    commit: this.commit,
+    getState: this.getState
+  });
+
+  saveModule(name, Object.assign(this, {
+    name: name,
+    getters: get$1(config, 'getters', {}),
+    actions: __actions,
+    reducer: function reducer() {
+      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+      var _ref4 = arguments[1];
+      var type = _ref4.type,
+          payload = _ref4.payload;
+      return _extends({}, state, run(__mutations, type, state, payload));
+    }
+  }));
+  Object.assign(this.dispatch, __actions);
+};
+
+var _initialiseProps = function _initialiseProps() {
+  var _this = this;
 
   this.dispatch = function () {
     for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -339,12 +410,12 @@ var ReModulex = function ReModulex(_ref) {
   };
 
   this.compute = function (state) {
-    return Object.entries(_this.getters).reduce(function (getters, _ref2) {
-      var _ref3 = slicedToArray(_ref2, 2),
-          key = _ref3[0],
-          getter = _ref3[1];
+    var compute = memoize(function (name) {
+      return run(_this.getters, name, state, compute);
+    });
 
-      return _extends({}, getters, defineProperty({}, key, getter(state)));
+    return Object.keys(_this.getters).reduce(function (getters, name) {
+      return _extends({}, getters, defineProperty({}, name, compute(name)));
     }, {});
   };
 
@@ -360,10 +431,10 @@ var ReModulex = function ReModulex(_ref) {
       return __cacheState;
     }
 
-    var _Object$entries$find = Object.entries(storeState).find(function (_ref4) {
-      var _ref5 = slicedToArray(_ref4, 2),
-          key = _ref5[0],
-          state = _ref5[1];
+    var _Object$entries$find = Object.entries(storeState).find(function (_ref5) {
+      var _ref6 = slicedToArray(_ref5, 2),
+          key = _ref6[0],
+          state = _ref6[1];
 
       return get$1(state, '__ReModulexName') === _this.name;
     }),
@@ -374,48 +445,6 @@ var ReModulex = function ReModulex(_ref) {
     _this.__storeKeyCache = storeKey;
     return moduleState;
   };
-
-  if (hasModule(name)) {
-    throw new Error('\n        [Creating ReModulex Error] Duplicated module named \'' + name + '\'\n      ');
-  }
-
-  if (!isObject(__initial__state)) {
-    throw new Error('\n        [Creating ReModulex Error] Initial state must be an Object!\n      ');
-  }
-
-  var initialState = _extends({
-    __ReModulexName: name
-  }, __initial__state);
-  var __mutations = Object.entries(run(config, 'mutations', {
-    combine: combine
-  })).reduce(function (mutations, _ref6) {
-    var _ref7 = slicedToArray(_ref6, 2),
-        actionType = _ref7[0],
-        reducer = _ref7[1];
-
-    return _extends({}, mutations, split(actionType, reducer, name));
-  }, {});
-  var __actions = run(config, 'actions', {
-    getModules: getModules,
-    getStoreState: getState,
-    dispatch: this.dispatch,
-    commit: this.commit,
-    getState: this.getState
-  });
-
-  saveModule(name, Object.assign(this, {
-    name: name,
-    getters: get$1(config, 'getters', {}),
-    actions: __actions,
-    reducer: function reducer() {
-      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-      var _ref8 = arguments[1];
-      var type = _ref8.type,
-          payload = _ref8.payload;
-      return _extends({}, state, run(__mutations, type, state, payload));
-    }
-  }));
-  Object.assign(this.dispatch, __actions);
 };
 
 /**
@@ -485,11 +514,11 @@ function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
 
 var hoistNonReactStatics_cjs = hoistNonReactStatics;
 
-var _value = value(function () {
+var ReModulexContext = value(function () {
   try {
-    return React__default.createContext();
+    return React.createContext();
   } catch (error) {
-    console.warn(new Error('\n      [ReModulex Environment Waring] \n        \'React.createContext\' API is not supported by you React version. \n        So \'ModuleProvider\' and \'connectModules\' would NOT effect.\n        Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.\n        https://github.com/CJY0208/re-modulex#%E4%B8%8D%E6%83%B3%E7%94%A8%E9%85%8D%E5%A5%97%E7%9A%84-moduleprovider-%E5%92%8C-connectmodules%E6%83%B3%E9%85%8D%E5%90%88-react-redux-\n    '));
+    console.warn(new Error('\n      [ReModulex Environment Waring] \n        \'createContext\' API is not supported by your React version. \n        \'ModuleProvider\' and \'connectModules\' would NOT effect.\n        Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.        \n    '));
     return {
       Provider: function Provider(_ref) {
         var children = _ref.children;
@@ -501,9 +530,11 @@ var _value = value(function () {
       }
     };
   }
-}),
-    Provider = _value.Provider,
-    Consumer = _value.Consumer;
+});
+
+var Provider = ReModulexContext.Provider,
+    Consumer = ReModulexContext.Consumer;
+
 
 var ModuleProvider = function (_Component) {
   inherits(ModuleProvider, _Component);
@@ -549,20 +580,34 @@ var ModuleProvider = function (_Component) {
 
 var connectModules = function connectModules(modulesGetter) {
   return function (Component) {
-    var C = function C(props) {
+    var C = React.forwardRef(function (props, ref) {
       return React__default.createElement(
         Consumer,
         null,
         function (storeState) {
-          return React__default.createElement(Component, _extends({}, props, mapModules(modulesGetter, storeState)));
+          return React__default.createElement(Component, _extends({}, props, mapModules(modulesGetter, storeState), { ref: ref }));
         }
       );
-    };
+    });
 
     C.displayName = 'HOC-ReModulex(' + value(Component.displayName, Component.name) + ')';
 
     return hoistNonReactStatics_cjs(C, Component);
   };
+};
+
+var useModules = function useModules(modulesGetter) {
+  if (!isFunction(React.useContext)) {
+    return console.warn('\n      [ReModulex Environment Waring] \n        \'useContext\' API is not supported by your React version.\n        YOU CAN NOT use \'useModules\' api unless upgrade React\n    ');
+  }
+
+  var storeState = React.useContext(ReModulexContext);
+
+  return mapModules(modulesGetter, storeState);
+};
+
+var useModule = function useModule(moduleName) {
+  return get$1(useModules([moduleName]), moduleName);
 };
 
 var createModule = function createModule() {
@@ -574,7 +619,9 @@ var createModule = function createModule() {
 };
 
 exports.createModule = createModule;
-exports.ModuleProvider = ModuleProvider;
-exports.connectModules = connectModules;
 exports.mapModules = mapModules;
 exports.applyStore = applyStore;
+exports.ModuleProvider = ModuleProvider;
+exports.connectModules = connectModules;
+exports.useModules = useModules;
+exports.useModule = useModule;

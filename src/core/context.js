@@ -1,21 +1,21 @@
-import React, { Component } from 'react'
+import React, { Component, useContext, forwardRef, createContext } from 'react'
 import hoistStatics from 'hoist-non-react-statics'
 
 import { getModules, mapModules } from '../helpers/modules'
 import { applyStore } from '../helpers/store'
 import { get, run, value } from '../helpers/try'
+import { isFunction } from '../helpers/is'
 
-const { Provider, Consumer } = value(() => {
+const ReModulexContext = value(() => {
   try {
-    return React.createContext()
+    return createContext()
   } catch (error) {
     console.warn(
       new Error(`
       [ReModulex Environment Waring] 
-        'React.createContext' API is not supported by you React version. 
-        So 'ModuleProvider' and 'connectModules' would NOT effect.
-        Use 'applyStore' and 'mapModules' with 'Provider' and 'connect' in react-redux instead.
-        https://github.com/CJY0208/re-modulex#%E4%B8%8D%E6%83%B3%E7%94%A8%E9%85%8D%E5%A5%97%E7%9A%84-moduleprovider-%E5%92%8C-connectmodules%E6%83%B3%E9%85%8D%E5%90%88-react-redux-
+        'createContext' API is not supported by your React version. 
+        'ModuleProvider' and 'connectModules' would NOT effect.
+        Use 'applyStore' and 'mapModules' with 'Provider' and 'connect' in react-redux instead.        
     `)
     )
     return {
@@ -24,6 +24,8 @@ const { Provider, Consumer } = value(() => {
     }
   }
 })
+
+const { Provider, Consumer } = ReModulexContext
 
 export class ModuleProvider extends Component {
   state = this.props.store.getState()
@@ -48,13 +50,17 @@ export class ModuleProvider extends Component {
 }
 
 export const connectModules = modulesGetter => Component => {
-  const C = props => (
+  const C = forwardRef((props, ref) => (
     <Consumer>
       {storeState => (
-        <Component {...props} {...mapModules(modulesGetter, storeState)} />
+        <Component
+          {...props}
+          {...mapModules(modulesGetter, storeState)}
+          {...{ ref }}
+        />
       )}
     </Consumer>
-  )
+  ))
 
   C.displayName = `HOC-ReModulex(${value(
     Component.displayName,
@@ -63,3 +69,19 @@ export const connectModules = modulesGetter => Component => {
 
   return hoistStatics(C, Component)
 }
+
+export const useModules = modulesGetter => {
+  if (!isFunction(useContext)) {
+    return console.warn(`
+      [ReModulex Environment Waring] 
+        'useContext' API is not supported by your React version.
+        YOU CAN NOT use 'useModules' api unless upgrade React
+    `)
+  }
+
+  const storeState = useContext(ReModulexContext)
+
+  return mapModules(modulesGetter, storeState)
+}
+
+export const useModule = moduleName => get(useModules([moduleName]), moduleName)

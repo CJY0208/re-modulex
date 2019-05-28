@@ -8,6 +8,7 @@ import {
   getState as getStoreState
 } from '../helpers/store'
 import { combine, split } from '../helpers/splitter'
+import memoize from '../helpers/memoize'
 
 export default class ReModulex {
   constructor({ name, state: __initial__state, ...config }) {
@@ -70,14 +71,17 @@ export default class ReModulex {
       payload
     })
 
-  compute = state =>
-    Object.entries(this.getters).reduce(
-      (getters, [key, getter]) => ({
+  compute = state => {
+    const compute = memoize(name => run(this.getters, name, state, compute))
+
+    return Object.keys(this.getters).reduce(
+      (getters, name) => ({
         ...getters,
-        [key]: getter(state)
+        [name]: compute(name)
       }),
       {}
     )
+  }
 
   __storeKeyCache
   getState = (storeState = getStoreState()) => {
