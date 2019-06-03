@@ -7,7 +7,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: 'dist/ReModulex.min.js',
+      file: 'dist/index.min.js',
       format: 'umd',
       name: 'ReModulex'
     },
@@ -26,7 +26,7 @@ export default [
   {
     input: 'src/index.js',
     output: {
-      file: 'dist/ReModulex.js',
+      file: 'dist/index.js',
       format: 'umd',
       name: 'ReModulex'
     },

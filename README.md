@@ -10,7 +10,7 @@ npm install re-modulex --save
 
 ## 基础用法
 
-更多使用方法请参考 [全特性Demo](https://github.com/CJY0208/re-modulex/blob/master/doc/%E5%85%A8%E7%89%B9%E6%80%A7Demo.md)
+更多使用方法请参考 [全特性Demo](https://github.com/CJY0208/re-modulex/blob/master/docs/%E5%85%A8%E7%89%B9%E6%80%A7Demo.md)
 
 ```javascript
 import React, { Component } from 'react'
@@ -34,6 +34,9 @@ const { reducer } = createModule({
     reduce: (state, amount) => ({
       counter: state.counter - amount
     })
+  },
+  getters: {
+    square: state => state.counter * 2
   }
 })
 
@@ -47,6 +50,7 @@ class App extends Component {
     return (
       <div>
         当前: {main.state.counter}
+        gettters.square = {main.getters.square}
         <div>  
           <button onClick={() => main.dispatch.add()}>加1</button>
           <button onClick={() => main.dispatch('reduce')}>减1</button>
@@ -62,6 +66,25 @@ render(
   </ModuleProvider>,
   document.getElementById('app')
 )
+```
+
+## 使用 Hooks
+
+```javascript
+
+import React from 'react'
+import { useModule } from 're-modulex'
+
+export default function App() {
+  const main = useModule('main')
+  // or const { main } = useModules(['main'])
+
+  return (
+    <div onClick={() => { main.commit.add() }}>
+      {main.state.counter}
+    </div>
+  )
+}
 ```
 
 - - -

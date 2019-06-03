@@ -1,4 +1,4 @@
-import { run } from './try'
+import { run } from '../helpers/try'
 
 let __store
 

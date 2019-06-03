@@ -17,7 +17,8 @@ const reduxModule = createModule({
     dispatch, // dispatch 只触发到动作层
     getState, // 获取当前 module 的 state
     getStoreState, // 获取整个 redux store 的 state
-    getModules // 获取其他 module 以进行模块间通信
+    getModules, // 获取其他 module 以进行模块间通信
+    getComputed // 获取当前 module 的 getters
   }) => ({
     counter: {
       add: (amount = 1) => commit('add', amount),
@@ -41,7 +42,8 @@ const reduxModule = createModule({
   }),
   // 允许衍生状态
   getters: {
-    text: state => `computed::${state.text}`
+    text2: (state, compute) => `computed 2::${compute('text')}` // 使用 compute 在 getters 中获取其他的 computed 属性，注意：getters 之间切勿循环引用
+    text: state => `computed::${state.text}`,    
   }
 })
 
@@ -88,6 +90,7 @@ export default class App extends Component {
         <input onChange={e => {
           const value = e.target.value
           main.commit('text', value) // 允许直接 commit
+          main.commit.text(value) // 允许直接 commit
         }} />
         <input onChange={e => {
           const value = e.target.value
@@ -95,6 +98,7 @@ export default class App extends Component {
         }} />
         <div>main text is: {main.state.text}</div>
         <div>main getters.text is: {main.getters.text}</div>
+        <div>main getters.text2 is: {main.getters.text2}</div>
       </div>
     )
   }

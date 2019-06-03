@@ -1,5 +1,6 @@
-import { isArray } from './is'
-import { value, run } from './try'
+import { isArray } from '../helpers/is'
+import { value, run } from '../helpers/try'
+import { pick } from '../helpers/utils'
 
 const __modules = {}
 
@@ -11,34 +12,24 @@ export const saveModule = (name, module) => {
 export const mapModules = (modulesGetter, storeState) => {
   if (isArray(modulesGetter)) {
     let moduleNames = [...modulesGetter]
-    modulesGetter = modules =>
-      moduleNames.reduce(
-        (res, name) =>
-          modules[name]
-            ? {
-                ...res,
-                [name]: modules[name]
-              }
-            : res,
-        {}
-      )
+    modulesGetter = modules => pick(modules, moduleNames)
   }
 
   const modules = value(run(modulesGetter, undefined, getModules()), {})
 
   return Object.entries(modules).reduce(
-    (res, [name, { dispatch, commit, compute, getState }]) => ({
+    (res, [name, { dispatch, commit, compute, getState, getComputed }]) => ({
       ...res,
       [name]: value(() => {
         const state = getState(storeState)
 
         return {
           getState,
-          getComputed: () => compute(getState()),
+          getComputed,
           dispatch,
           commit,
           state,
-          getters: compute(state)
+          getters: getComputed()
         }
       })
     }),

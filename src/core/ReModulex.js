@@ -2,14 +2,12 @@ import React from 'react'
 
 import { get, run, value } from '../helpers/try'
 import { isObject, isFunction } from '../helpers/is'
-import { saveModule, getModules, hasModule } from '../helpers/modules'
-import {
-  dispatch as storeDispatch,
-  getState as getStoreState
-} from '../helpers/store'
-import { combine, split } from '../helpers/splitter'
-import memoize from '../helpers/memoize'
+import { memoize } from '../helpers/utils'
+import { saveModule, getModules, hasModule } from './modules'
+import { dispatch as storeDispatch, getState as getStoreState } from './store'
+import { combine, split } from './splitter'
 
+// 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 export default class ReModulex {
   constructor({ name, state: __initial__state, ...config }) {
     if (hasModule(name)) {
@@ -28,23 +26,37 @@ export default class ReModulex {
       __ReModulexName: name,
       ...__initial__state
     }
-    const __mutations = Object.entries(
+    const __get__mutations__state = Object.entries(
       run(config, 'mutations', {
         combine
       })
     ).reduce(
       (mutations, [actionType, reducer]) => ({
         ...mutations,
-        ...split(actionType, reducer, name)
+        ...split(actionType, reducer)
       }),
       {}
     )
+
+    const __mutations = Object.entries(__get__mutations__state).reduce(
+      (mutations, [type, func]) => ({
+        ...mutations,
+        [type]: payload =>
+          storeDispatch({
+            type: `${name}::${type}`,
+            payload
+          })
+      }),
+      {}
+    )
+
     const __actions = run(config, 'actions', {
       getModules,
       getStoreState,
       dispatch: this.dispatch,
       commit: this.commit,
-      getState: this.getState
+      getState: this.getState,
+      getComputed: this.getComputed
     })
 
     saveModule(
@@ -53,23 +65,33 @@ export default class ReModulex {
         name,
         getters: get(config, 'getters', {}),
         actions: __actions,
-        reducer: (state = initialState, { type, payload }) => ({
-          ...state,
-          ...run(__mutations, type, state, payload)
-        })
+        mutations: __mutations,
+        reducer: (state = initialState, { type, payload }) => {
+          const nextState = {
+            ...state,
+            ...run(
+              __get__mutations__state,
+              type.replace(`${name}::`, ''),
+              state,
+              payload
+            )
+          }
+
+          return {
+            ...nextState,
+            _getters: this.compute(nextState)
+          }
+        }
       })
     )
     Object.assign(this.dispatch, __actions)
+    Object.assign(this.commit, __mutations)
   }
 
   dispatch = (actionName = '', ...args) =>
     run(this.actions, actionName.split('/'), ...args)
 
-  commit = (actionType = '', payload) =>
-    storeDispatch({
-      type: `${this.name}::${actionType}`,
-      payload
-    })
+  commit = (type = '', payload) => run(this.mutations, type, payload)
 
   compute = state => {
     const compute = memoize(name => run(this.getters, name, state, compute))
@@ -99,5 +121,10 @@ export default class ReModulex {
     )
     this.__storeKeyCache = storeKey
     return moduleState
+  }
+
+  getComputed = () => {
+    const state = this.getState()
+    return get(state, '_getters', this.compute(state))
   }
 }

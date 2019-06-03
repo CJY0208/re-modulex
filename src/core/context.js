@@ -1,8 +1,8 @@
 import React, { Component, useContext, forwardRef, createContext } from 'react'
 import hoistStatics from 'hoist-non-react-statics'
 
-import { getModules, mapModules } from '../helpers/modules'
-import { applyStore } from '../helpers/store'
+import { getModules, mapModules } from './modules'
+import { applyStore } from './store'
 import { get, run, value } from '../helpers/try'
 import { isFunction } from '../helpers/is'
 

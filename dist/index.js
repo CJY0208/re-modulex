@@ -213,6 +213,62 @@
     }, undefined);
   };
 
+  /**
+   * [缓存函数结果]
+   * @param {Function} fn 被处理的函数
+   */
+  var memoize = function memoize(fn) {
+    var cache = new Map();
+    var memoized = function memoized(param) {
+      if (cache.has(param)) {
+        return cache.get(param);
+      }
+
+      for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        rest[_key - 1] = arguments[_key];
+      }
+
+      var result = fn.call.apply(fn, [this, param].concat(rest));
+
+      cache.set(param, result);
+      return result;
+    };
+
+    memoized.cache = cache;
+    return memoized;
+  };
+
+  var pickBy = function pickBy(obj) {
+    var predicate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : function (val) {
+      return val;
+    };
+    return Object.entries(obj).filter(function (_ref) {
+      var _ref2 = slicedToArray(_ref, 2),
+          key = _ref2[0],
+          value$$1 = _ref2[1];
+
+      return run(predicate, undefined, value$$1, key);
+    }).reduce(function (res, _ref3) {
+      var _ref4 = slicedToArray(_ref3, 2),
+          key = _ref4[0],
+          value$$1 = _ref4[1];
+
+      return _extends({}, res, defineProperty({}, key, value$$1));
+    }, {});
+  };
+
+  /**
+   * [过滤对象属性] 挑选处一个对象中的指定属性
+   * @param {Object} obj 数据源对象
+   * @param {Array} keys
+   */
+  var pick = function pick(obj) {
+    var keys = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Object.keys(obj);
+    return pickBy(obj, function (value$$1, key) {
+      return keys.includes(key);
+    });
+  };
+
   var __modules = {};
 
   var getModules = function getModules() {
@@ -228,9 +284,7 @@
     if (isArray(modulesGetter)) {
       var moduleNames = [].concat(toConsumableArray(modulesGetter));
       modulesGetter = function modulesGetter(modules) {
-        return moduleNames.reduce(function (res, name) {
-          return modules[name] ? _extends({}, res, defineProperty({}, name, modules[name])) : res;
-        }, {});
+        return pick(modules, moduleNames);
       };
     }
 
@@ -243,20 +297,19 @@
           dispatch = _ref2$.dispatch,
           commit = _ref2$.commit,
           compute = _ref2$.compute,
-          getState = _ref2$.getState;
+          getState = _ref2$.getState,
+          getComputed = _ref2$.getComputed;
 
       return _extends({}, res, defineProperty({}, name, value(function () {
         var state = getState(storeState);
 
         return {
           getState: getState,
-          getComputed: function getComputed() {
-            return compute(getState());
-          },
+          getComputed: getComputed,
           dispatch: dispatch,
           commit: commit,
           state: state,
-          getters: compute(state)
+          getters: getComputed()
         };
       })));
     }, {});
@@ -305,38 +358,17 @@
 
     return actions.join(__splitter);
   };
-  var split = function split(types, reducer, name) {
+  var split = function split(types, reducer) {
     return types.split(__splitter).reduce(function (actions, type) {
-      return _extends({}, actions, defineProperty({}, name + '::' + type, reducer));
+      return _extends({}, actions, defineProperty({}, type, reducer));
     }, {});
   };
 
-  /**
-   * [缓存函数结果]
-   * @param {Function} fn 被处理的函数
-   */
-  var memoize = function memoize(fn) {
-    var cache = new Map();
-    var memoized = function memoized(param) {
-      if (cache.has(param)) {
-        return cache.get(param);
-      }
-
-      for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        rest[_key - 1] = arguments[_key];
-      }
-
-      var result = fn.call.apply(fn, [this, param].concat(rest));
-
-      cache.set(param, result);
-      return result;
-    };
-
-    memoized.cache = cache;
-    return memoized;
-  };
+  // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 
   var ReModulex = function ReModulex(_ref) {
+    var _this = this;
+
     var name = _ref.name,
         __initial__state = _ref.state,
         config = objectWithoutProperties(_ref, ['name', 'state']);
@@ -355,40 +387,62 @@
     var initialState = _extends({
       __ReModulexName: name
     }, __initial__state);
-    var __mutations = Object.entries(run(config, 'mutations', {
+    var __get__mutations__state = Object.entries(run(config, 'mutations', {
       combine: combine
     })).reduce(function (mutations, _ref2) {
       var _ref3 = slicedToArray(_ref2, 2),
           actionType = _ref3[0],
           reducer = _ref3[1];
 
-      return _extends({}, mutations, split(actionType, reducer, name));
+      return _extends({}, mutations, split(actionType, reducer));
     }, {});
+
+    var __mutations = Object.entries(__get__mutations__state).reduce(function (mutations, _ref4) {
+      var _ref5 = slicedToArray(_ref4, 2),
+          type = _ref5[0],
+          func = _ref5[1];
+
+      return _extends({}, mutations, defineProperty({}, type, function (payload) {
+        return dispatch({
+          type: name + '::' + type,
+          payload: payload
+        });
+      }));
+    }, {});
+
     var __actions = run(config, 'actions', {
       getModules: getModules,
       getStoreState: getState,
       dispatch: this.dispatch,
       commit: this.commit,
-      getState: this.getState
+      getState: this.getState,
+      getComputed: this.getComputed
     });
 
     saveModule(name, Object.assign(this, {
       name: name,
       getters: get$1(config, 'getters', {}),
       actions: __actions,
+      mutations: __mutations,
       reducer: function reducer() {
         var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
-        var _ref4 = arguments[1];
-        var type = _ref4.type,
-            payload = _ref4.payload;
-        return _extends({}, state, run(__mutations, type, state, payload));
+        var _ref6 = arguments[1];
+        var type = _ref6.type,
+            payload = _ref6.payload;
+
+        var nextState = _extends({}, state, run(__get__mutations__state, type.replace(name + '::', ''), state, payload));
+
+        return _extends({}, nextState, {
+          _getters: _this.compute(nextState)
+        });
       }
     }));
     Object.assign(this.dispatch, __actions);
+    Object.assign(this.commit, __mutations);
   };
 
   var _initialiseProps = function _initialiseProps() {
-    var _this = this;
+    var _this2 = this;
 
     this.dispatch = function () {
       for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -396,24 +450,21 @@
       }
 
       var actionName = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-      return run.apply(undefined, [_this.actions, actionName.split('/')].concat(args));
+      return run.apply(undefined, [_this2.actions, actionName.split('/')].concat(args));
     };
 
     this.commit = function () {
-      var actionType = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
       var payload = arguments[1];
-      return dispatch({
-        type: _this.name + '::' + actionType,
-        payload: payload
-      });
+      return run(_this2.mutations, type, payload);
     };
 
     this.compute = function (state) {
       var compute = memoize(function (name) {
-        return run(_this.getters, name, state, compute);
+        return run(_this2.getters, name, state, compute);
       });
 
-      return Object.keys(_this.getters).reduce(function (getters, name) {
+      return Object.keys(_this2.getters).reduce(function (getters, name) {
         return _extends({}, getters, defineProperty({}, name, compute(name)));
       }, {});
     };
@@ -421,28 +472,33 @@
     this.getState = function () {
       var storeState = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getState();
 
-      if (storeState.__ReModulexName === _this.name) {
+      if (storeState.__ReModulexName === _this2.name) {
         return storeState;
       }
 
-      var __cacheState = get$1(storeState, _this.__storeKeyCache);
-      if (get$1(__cacheState, '__ReModulexName') === _this.name) {
+      var __cacheState = get$1(storeState, _this2.__storeKeyCache);
+      if (get$1(__cacheState, '__ReModulexName') === _this2.name) {
         return __cacheState;
       }
 
-      var _Object$entries$find = Object.entries(storeState).find(function (_ref5) {
-        var _ref6 = slicedToArray(_ref5, 2),
-            key = _ref6[0],
-            state = _ref6[1];
+      var _Object$entries$find = Object.entries(storeState).find(function (_ref7) {
+        var _ref8 = slicedToArray(_ref7, 2),
+            key = _ref8[0],
+            state = _ref8[1];
 
-        return get$1(state, '__ReModulexName') === _this.name;
+        return get$1(state, '__ReModulexName') === _this2.name;
       }),
           _Object$entries$find2 = slicedToArray(_Object$entries$find, 2),
           storeKey = _Object$entries$find2[0],
           moduleState = _Object$entries$find2[1];
 
-      _this.__storeKeyCache = storeKey;
+      _this2.__storeKeyCache = storeKey;
       return moduleState;
+    };
+
+    this.getComputed = function () {
+      var state = _this2.getState();
+      return get$1(state, '_getters', _this2.compute(state));
     };
   };
 
