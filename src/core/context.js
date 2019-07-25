@@ -5,18 +5,19 @@ import { getModules, mapModules } from './modules'
 import { applyStore } from './store'
 import { get, run, value } from '../helpers/try'
 import { isFunction } from '../helpers/is'
+import { warn } from '../helpers/logger'
 
 const ReModulexContext = value(() => {
   try {
     return createContext()
   } catch (error) {
-    console.warn(
+    warn(
       new Error(`
-      [ReModulex Environment Waring] 
-        'createContext' API is not supported by your React version. 
-        'ModuleProvider' and 'connectModules' would NOT effect.
-        Use 'applyStore' and 'mapModules' with 'Provider' and 'connect' in react-redux instead.        
-    `)
+        [ReModulex Environment Waring] 
+          'createContext' API is not supported by your React version. 
+          'ModuleProvider' and 'connectModules' would NOT effect.
+          Use 'applyStore' and 'mapModules' with 'Provider' and 'connect' in react-redux instead.        
+      `)
     )
     return {
       Provider: ({ children }) => run(children),
@@ -72,7 +73,7 @@ export const connectModules = modulesGetter => Component => {
 
 export const useModules = modulesGetter => {
   if (!isFunction(useContext)) {
-    return console.warn(`
+    return warn(`
       [ReModulex Environment Waring] 
         'useContext' API is not supported by your React version.
         YOU CAN NOT use 'useModules' api unless upgrade React

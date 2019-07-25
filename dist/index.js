@@ -213,6 +213,31 @@
     }, undefined);
   };
 
+  var conf = {
+    silent: false
+  };
+
+  var config = function config(_config) {
+    conf = _extends({}, conf, _config);
+  };
+
+  var check = function check(fn) {
+    return function () {
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      if (conf.silent) {
+        return;
+      }
+
+      return run.apply(undefined, [fn, undefined].concat(args));
+    };
+  };
+
+  var warn = check(console.warn);
+  var error = check(console.error);
+
   /**
    * [缓存函数结果]
    * @param {Function} fn 被处理的函数
@@ -317,14 +342,14 @@
 
   var __store = void 0;
 
-  var check = function check(fn) {
+  var check$1 = function check(fn) {
     return function () {
       for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
 
       if (!__store) {
-        console.error(new Error('\n      [ReModulex Error] \n        Forgot to apply the store?\n        Use \'ReModulex.applyStore\' with your redux store!\n    '));
+        error(new Error('\n        [ReModulex Error] \n          Forgot to apply the store?\n          Use \'ReModulex.applyStore\' with your redux store!\n      '));
       }
       return run.apply(undefined, [fn, undefined].concat(args));
     };
@@ -334,14 +359,17 @@
     __store = store;
   };
 
-  var dispatch = check(function () {
+  var getStore = check$1(function () {
+    return __store;
+  });
+  var dispatch = check$1(function () {
     for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
     }
 
     return run.apply(undefined, [__store, 'dispatch'].concat(args));
   });
-  var getState = check(function () {
+  var getState = check$1(function () {
     for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
       args[_key3] = arguments[_key3];
     }
@@ -371,13 +399,13 @@
 
     var name = _ref.name,
         __initial__state = _ref.state,
-        config = objectWithoutProperties(_ref, ['name', 'state']);
+        config$$1 = objectWithoutProperties(_ref, ['name', 'state']);
     classCallCheck(this, ReModulex);
 
     _initialiseProps.call(this);
 
     if (hasModule(name)) {
-      throw new Error('\n        [Creating ReModulex Error] Duplicated module named \'' + name + '\'\n      ');
+      warn(new Error('[Creating ReModulex Waring] Module named \'' + name + '\' redefined'));
     }
 
     if (!isObject(__initial__state)) {
@@ -387,7 +415,7 @@
     var initialState = _extends({
       __ReModulexName: name
     }, __initial__state);
-    var __get__mutations__state = Object.entries(run(config, 'mutations', {
+    var __get__mutations__state = Object.entries(run(config$$1, 'mutations', {
       combine: combine
     })).reduce(function (mutations, _ref2) {
       var _ref3 = slicedToArray(_ref2, 2),
@@ -410,9 +438,11 @@
       }));
     }, {});
 
-    var __actions = run(config, 'actions', {
+    var __actions = run(config$$1, 'actions', {
+      getStore: getStore,
       getModules: getModules,
       getStoreState: getState,
+      getRootState: getState,
       dispatch: this.dispatch,
       commit: this.commit,
       getState: this.getState,
@@ -421,7 +451,7 @@
 
     saveModule(name, Object.assign(this, {
       name: name,
-      getters: get$1(config, 'getters', {}),
+      getters: get$1(config$$1, 'getters', {}),
       actions: __actions,
       mutations: __mutations,
       reducer: function reducer() {
@@ -471,6 +501,10 @@
 
     this.getState = function () {
       var storeState = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getState();
+
+      if (!storeState) {
+        return {};
+      }
 
       if (storeState.__ReModulexName === _this2.name) {
         return storeState;
@@ -572,8 +606,8 @@
   var ReModulexContext = value(function () {
     try {
       return React.createContext();
-    } catch (error) {
-      console.warn(new Error('\n      [ReModulex Environment Waring] \n        \'createContext\' API is not supported by your React version. \n        \'ModuleProvider\' and \'connectModules\' would NOT effect.\n        Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.        \n    '));
+    } catch (error$$1) {
+      warn(new Error('\n        [ReModulex Environment Waring] \n          \'createContext\' API is not supported by your React version. \n          \'ModuleProvider\' and \'connectModules\' would NOT effect.\n          Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.        \n      '));
       return {
         Provider: function Provider(_ref) {
           var children = _ref.children;
@@ -653,7 +687,7 @@
 
   var useModules = function useModules(modulesGetter) {
     if (!isFunction(React.useContext)) {
-      return console.warn('\n      [ReModulex Environment Waring] \n        \'useContext\' API is not supported by your React version.\n        YOU CAN NOT use \'useModules\' api unless upgrade React\n    ');
+      return warn('\n      [ReModulex Environment Waring] \n        \'useContext\' API is not supported by your React version.\n        YOU CAN NOT use \'useModules\' api unless upgrade React\n    ');
     }
 
     var storeState = React.useContext(ReModulexContext);
@@ -673,8 +707,12 @@
     return new (Function.prototype.bind.apply(ReModulex, [null].concat(args)))();
   };
 
+  exports.default = ReModulex;
   exports.createModule = createModule;
+  exports.configLogger = config;
   exports.mapModules = mapModules;
+  exports.getModules = getModules;
+  exports.hasModule = hasModule;
   exports.applyStore = applyStore;
   exports.ModuleProvider = ModuleProvider;
   exports.connectModules = connectModules;

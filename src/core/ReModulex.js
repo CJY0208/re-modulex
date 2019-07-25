@@ -2,18 +2,25 @@ import React from 'react'
 
 import { get, run, value } from '../helpers/try'
 import { isObject, isFunction } from '../helpers/is'
+import { warn } from '../helpers/logger'
 import { memoize } from '../helpers/utils'
 import { saveModule, getModules, hasModule } from './modules'
-import { dispatch as storeDispatch, getState as getStoreState } from './store'
+import {
+  dispatch as storeDispatch,
+  getState as getStoreState,
+  getStore
+} from './store'
 import { combine, split } from './splitter'
 
 // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 export default class ReModulex {
   constructor({ name, state: __initial__state, ...config }) {
     if (hasModule(name)) {
-      throw new Error(`
-        [Creating ReModulex Error] Duplicated module named '${name}'
-      `)
+      warn(
+        new Error(
+          `[Creating ReModulex Waring] Module named '${name}' redefined`
+        )
+      )
     }
 
     if (!isObject(__initial__state)) {
@@ -51,8 +58,10 @@ export default class ReModulex {
     )
 
     const __actions = run(config, 'actions', {
+      getStore,
       getModules,
       getStoreState,
+      getRootState: getStoreState,
       dispatch: this.dispatch,
       commit: this.commit,
       getState: this.getState,
@@ -107,6 +116,10 @@ export default class ReModulex {
 
   __storeKeyCache
   getState = (storeState = getStoreState()) => {
+    if (!storeState) {
+      return {}
+    }
+
     if (storeState.__ReModulexName === this.name) {
       return storeState
     }
