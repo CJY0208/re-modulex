@@ -1,4 +1,4 @@
-import { isString, isExist, isUndefined, isFunction } from '../is'
+import { isString, isUndefined, isFunction } from '../is'
 
 export const get = (obj, keys = [], defaultValue) => {
   try {

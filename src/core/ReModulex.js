@@ -1,7 +1,5 @@
-import React from 'react'
-
-import { get, run, value } from '../helpers/try'
-import { isObject, isFunction } from '../helpers/is'
+import { get, run } from '../helpers/try'
+import { isObject } from '../helpers/is'
 import { warn } from '../helpers/logger'
 import { memoize } from '../helpers/utils'
 import { saveModule, getModules, hasModule } from './modules'
@@ -14,26 +12,23 @@ import { combine, split } from './splitter'
 
 // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 export default class ReModulex {
-  constructor({ name, state: __initial__state, ...config }) {
+  constructor({ name, state: __initialState, ...config }) {
     if (hasModule(name)) {
-      warn(
-        new Error(
-          `[Creating ReModulex Waring] Module named '${name}' redefined`
-        )
+      warn('[Creating ReModulex Waring] Module named "${name}" redefined')
+    }
+
+    if (!isObject(__initialState)) {
+      throw new Error(
+        '[Creating ReModulex Error] Initial state must be an Object!'
       )
     }
 
-    if (!isObject(__initial__state)) {
-      throw new Error(`
-        [Creating ReModulex Error] Initial state must be an Object!
-      `)
-    }
-
+    const __actionTypePrefix = `${name}::`
     const initialState = {
       __ReModulexName: name,
-      ...__initial__state
+      ...__initialState
     }
-    const __get__mutations__state = Object.entries(
+    const __getMutationsState = Object.entries(
       run(config, 'mutations', {
         combine
       })
@@ -45,12 +40,12 @@ export default class ReModulex {
       {}
     )
 
-    const __mutations = Object.entries(__get__mutations__state).reduce(
+    const __mutations = Object.entries(__getMutationsState).reduce(
       (mutations, [type, func]) => ({
         ...mutations,
         [type]: payload =>
           storeDispatch({
-            type: `${name}::${type}`,
+            type: `${__actionTypePrefix}${type}`,
             payload
           })
       }),
@@ -72,23 +67,31 @@ export default class ReModulex {
       name,
       Object.assign(this, {
         name,
-        getters: get(config, 'getters', {}),
+        getters: run(config, 'getters', {
+          compute: name => run(this.computeSingleState, undefined, name)
+        }),
         actions: __actions,
         mutations: __mutations,
         reducer: (state = initialState, { type, payload }) => {
+          if (!type.startsWith(__actionTypePrefix)) {
+            return state
+          }
+
           const nextState = {
             ...state,
             ...run(
-              __get__mutations__state,
-              type.replace(`${name}::`, ''),
+              __getMutationsState,
+              type.replace(__actionTypePrefix, ''),
               state,
               payload
             )
           }
+          const getters = this.compute(nextState)
+          this.__getters = getters
 
           return {
             ...nextState,
-            _getters: this.compute(nextState)
+            _getters: getters
           }
         }
       })
@@ -102,8 +105,10 @@ export default class ReModulex {
 
   commit = (type = '', payload) => run(this.mutations, type, payload)
 
+  computeSingleState
   compute = state => {
     const compute = memoize(name => run(this.getters, name, state, compute))
+    this.computeSingleState = compute
 
     return Object.keys(this.getters).reduce(
       (getters, name) => ({
@@ -136,8 +141,16 @@ export default class ReModulex {
     return moduleState
   }
 
+  __getters
   getComputed = () => {
+    if (this.__getters) {
+      return this.__getters
+    }
+
     const state = this.getState()
-    return get(state, '_getters', this.compute(state))
+    const getters = this.compute(state)
+    this.__getters = getters
+
+    return getters
   }
 }

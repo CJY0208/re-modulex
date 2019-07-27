@@ -349,7 +349,7 @@
       }
 
       if (!__store) {
-        error(new Error('\n        [ReModulex Error] \n          Forgot to apply the store?\n          Use \'ReModulex.applyStore\' with your redux store!\n      '));
+        error('[ReModulex Error] Forgot to apply the store? Use "applyStore" with your redux store!');
       }
       return run.apply(undefined, [fn, undefined].concat(args));
     };
@@ -398,24 +398,25 @@
     var _this = this;
 
     var name = _ref.name,
-        __initial__state = _ref.state,
+        __initialState = _ref.state,
         config$$1 = objectWithoutProperties(_ref, ['name', 'state']);
     classCallCheck(this, ReModulex);
 
     _initialiseProps.call(this);
 
     if (hasModule(name)) {
-      warn(new Error('[Creating ReModulex Waring] Module named \'' + name + '\' redefined'));
+      warn('[Creating ReModulex Waring] Module named "${name}" redefined');
     }
 
-    if (!isObject(__initial__state)) {
-      throw new Error('\n        [Creating ReModulex Error] Initial state must be an Object!\n      ');
+    if (!isObject(__initialState)) {
+      throw new Error('[Creating ReModulex Error] Initial state must be an Object!');
     }
 
+    var __actionTypePrefix = name + '::';
     var initialState = _extends({
       __ReModulexName: name
-    }, __initial__state);
-    var __get__mutations__state = Object.entries(run(config$$1, 'mutations', {
+    }, __initialState);
+    var __getMutationsState = Object.entries(run(config$$1, 'mutations', {
       combine: combine
     })).reduce(function (mutations, _ref2) {
       var _ref3 = slicedToArray(_ref2, 2),
@@ -425,14 +426,14 @@
       return _extends({}, mutations, split(actionType, reducer));
     }, {});
 
-    var __mutations = Object.entries(__get__mutations__state).reduce(function (mutations, _ref4) {
+    var __mutations = Object.entries(__getMutationsState).reduce(function (mutations, _ref4) {
       var _ref5 = slicedToArray(_ref4, 2),
           type = _ref5[0],
           func = _ref5[1];
 
       return _extends({}, mutations, defineProperty({}, type, function (payload) {
         return dispatch({
-          type: name + '::' + type,
+          type: '' + __actionTypePrefix + type,
           payload: payload
         });
       }));
@@ -451,7 +452,11 @@
 
     saveModule(name, Object.assign(this, {
       name: name,
-      getters: get$1(config$$1, 'getters', {}),
+      getters: run(config$$1, 'getters', {
+        compute: function compute(name) {
+          return run(_this.computeSingleState, undefined, name);
+        }
+      }),
       actions: __actions,
       mutations: __mutations,
       reducer: function reducer() {
@@ -460,10 +465,16 @@
         var type = _ref6.type,
             payload = _ref6.payload;
 
-        var nextState = _extends({}, state, run(__get__mutations__state, type.replace(name + '::', ''), state, payload));
+        if (!type.startsWith(__actionTypePrefix)) {
+          return state;
+        }
+
+        var nextState = _extends({}, state, run(__getMutationsState, type.replace(__actionTypePrefix, ''), state, payload));
+        var getters = _this.compute(nextState);
+        _this.__getters = getters;
 
         return _extends({}, nextState, {
-          _getters: _this.compute(nextState)
+          _getters: getters
         });
       }
     }));
@@ -493,6 +504,7 @@
       var compute = memoize(function (name) {
         return run(_this2.getters, name, state, compute);
       });
+      _this2.computeSingleState = compute;
 
       return Object.keys(_this2.getters).reduce(function (getters, name) {
         return _extends({}, getters, defineProperty({}, name, compute(name)));
@@ -531,8 +543,15 @@
     };
 
     this.getComputed = function () {
+      if (_this2.__getters) {
+        return _this2.__getters;
+      }
+
       var state = _this2.getState();
-      return get$1(state, '_getters', _this2.compute(state));
+      var getters = _this2.compute(state);
+      _this2.__getters = getters;
+
+      return getters;
     };
   };
 
@@ -607,7 +626,7 @@
     try {
       return React.createContext();
     } catch (error$$1) {
-      warn(new Error('\n        [ReModulex Environment Waring] \n          \'createContext\' API is not supported by your React version. \n          \'ModuleProvider\' and \'connectModules\' would NOT effect.\n          Use \'applyStore\' and \'mapModules\' with \'Provider\' and \'connect\' in react-redux instead.        \n      '));
+      warn('[ReModulex Environment Waring] "createContext" API is not supported by your React version. "ModuleProvider" and "connectModules" would NOT effect. Use "applyStore" and "mapModules" with "Provider" and "connect" in react-redux instead.');
       return {
         Provider: function Provider(_ref) {
           var children = _ref.children;
@@ -687,7 +706,7 @@
 
   var useModules = function useModules(modulesGetter) {
     if (!isFunction(React.useContext)) {
-      return warn('\n      [ReModulex Environment Waring] \n        \'useContext\' API is not supported by your React version.\n        YOU CAN NOT use \'useModules\' api unless upgrade React\n    ');
+      return warn('[ReModulex Environment Waring] "useContext" API is not supported by your React version. YOU CAN NOT use "useModules" api unless upgrade React');
     }
 
     var storeState = React.useContext(ReModulexContext);

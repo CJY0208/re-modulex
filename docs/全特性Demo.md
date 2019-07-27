@@ -14,11 +14,13 @@ const reduxModule = createModule({
   },
   actions: ({
     commit, // commit 为原 redux 的 dispatch
-    dispatch, // dispatch 只触发到动作层
+    dispatch, // dispatch 只触发到 actions 层
     getState, // 获取当前 module 的 state
-    getStoreState, // 获取整个 redux store 的 state
-    getModules, // 获取其他 module 以进行模块间通信
     getComputed // 获取当前 module 的 getters
+    getRootState, // 获取整个 redux store 的 state
+    getStoreState, // 获取整个 redux store 的 state, 与 getRootState 作用相同
+    getModules, // 获取其他 module 以进行模块间通信
+    getStore, // 获取 redux store 实例    
   }) => ({
     counter: {
       add: (amount = 1) => commit('add', amount),
@@ -41,10 +43,10 @@ const reduxModule = createModule({
     text: (state, text) => ({ text })
   }),
   // 允许衍生状态
-  getters: {
-    text2: (state, compute) => `computed 2::${compute('text')}` // 使用 compute 在 getters 中获取其他的 computed 属性，注意：getters 之间切勿循环引用
+  getters: ({ compute }) => ({
+    text2: state => `computed 2::${compute('text')}` // 使用 compute 在 getters 中获取其他的 computed 属性，注意：getters 之间切勿循环引用
     text: state => `computed::${state.text}`,    
-  }
+  }  )
 })
 
 export default reduxModule
