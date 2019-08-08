@@ -456,7 +456,7 @@
         compute: function compute(name) {
           return run(_this.computeSingleState, undefined, name);
         }
-      }),
+      }) || {},
       actions: __actions,
       mutations: __mutations,
       reducer: function reducer() {

@@ -67,9 +67,10 @@ export default class ReModulex {
       name,
       Object.assign(this, {
         name,
-        getters: run(config, 'getters', {
-          compute: name => run(this.computeSingleState, undefined, name)
-        }),
+        getters:
+          run(config, 'getters', {
+            compute: name => run(this.computeSingleState, undefined, name)
+          }) || {},
         actions: __actions,
         mutations: __mutations,
         reducer: (state = initialState, { type, payload }) => {
