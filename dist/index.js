@@ -392,7 +392,7 @@
     }, {});
   };
 
-  var SCOPE_NAME = 'RE_MODULEX_SCOPE';
+  var SCOPE_NAME = 'REMODULEX_SCOPE';
 
   // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 

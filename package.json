@@ -1,6 +1,6 @@
 {
   "name": "re-modulex",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Make Redux easier like vuex in React Application",
   "main": "index.js",
   "scripts": {

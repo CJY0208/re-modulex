@@ -10,7 +10,7 @@ import {
 } from './store'
 import { combine, split } from './splitter'
 
-export const SCOPE_NAME = 'RE_MODULEX_SCOPE'
+export const SCOPE_NAME = 'REMODULEX_SCOPE'
 
 // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 export default class ReModulex {
