@@ -10,6 +10,8 @@ import {
 } from './store'
 import { combine, split } from './splitter'
 
+export const SCOPE_NAME = 'RE_MODULEX_SCOPE'
+
 // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 export default class ReModulex {
   constructor({ name, state: __initialState, ...config }) {
@@ -135,9 +137,23 @@ export default class ReModulex {
       return __cacheState
     }
 
-    const [storeKey, moduleState] = Object.entries(storeState).find(
-      ([key, state]) => get(state, '__ReModulexName') === this.name
-    )
+    if (SCOPE_NAME in storeState) {
+      const [storeKey, moduleState] =
+        Object.entries(storeState[SCOPE_NAME]).find(
+          ([key, state]) => get(state, '__ReModulexName') === this.name
+        ) || []
+
+      if (moduleState) {
+        this.__storeKeyCache = `${SCOPE_NAME}.${storeKey}`
+        return moduleState
+      }
+    }
+
+    const [storeKey, moduleState] =
+      Object.entries(storeState).find(
+        ([key, state]) => get(state, '__ReModulexName') === this.name
+      ) || []
+
     this.__storeKeyCache = storeKey
     return moduleState
   }

@@ -392,6 +392,8 @@
     }, {});
   };
 
+  var SCOPE_NAME = 'RE_MODULEX_SCOPE';
+
   // 很抱歉...我是一个懒人...注释什么的...等有空再加 >_<
 
   var ReModulex = function ReModulex(_ref) {
@@ -527,16 +529,34 @@
         return __cacheState;
       }
 
-      var _Object$entries$find = Object.entries(storeState).find(function (_ref7) {
-        var _ref8 = slicedToArray(_ref7, 2),
-            key = _ref8[0],
-            state = _ref8[1];
+      if (SCOPE_NAME in storeState) {
+        var _ref7 = Object.entries(storeState[SCOPE_NAME]).find(function (_ref9) {
+          var _ref10 = slicedToArray(_ref9, 2),
+              key = _ref10[0],
+              state = _ref10[1];
+
+          return get$1(state, '__ReModulexName') === _this2.name;
+        }) || [],
+            _ref8 = slicedToArray(_ref7, 2),
+            _storeKey = _ref8[0],
+            _moduleState = _ref8[1];
+
+        if (_moduleState) {
+          _this2.__storeKeyCache = SCOPE_NAME + '.' + _storeKey;
+          return _moduleState;
+        }
+      }
+
+      var _ref11 = Object.entries(storeState).find(function (_ref13) {
+        var _ref14 = slicedToArray(_ref13, 2),
+            key = _ref14[0],
+            state = _ref14[1];
 
         return get$1(state, '__ReModulexName') === _this2.name;
-      }),
-          _Object$entries$find2 = slicedToArray(_Object$entries$find, 2),
-          storeKey = _Object$entries$find2[0],
-          moduleState = _Object$entries$find2[1];
+      }) || [],
+          _ref12 = slicedToArray(_ref11, 2),
+          storeKey = _ref12[0],
+          moduleState = _ref12[1];
 
       _this2.__storeKeyCache = storeKey;
       return moduleState;
@@ -728,6 +748,7 @@
 
   exports.default = ReModulex;
   exports.createModule = createModule;
+  exports.SCOPE_NAME = SCOPE_NAME;
   exports.configLogger = config;
   exports.mapModules = mapModules;
   exports.getModules = getModules;
